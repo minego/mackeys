@@ -1,0 +1,5 @@
+- JOB:
+    - "intercept -g $DEVNODE | ./mackeys -c '/home/m/checkterm' | uinput -d $DEVNODE"
+  DEVICE:
+    NAME: ".*((k|K)(eyboard|EYBOARD)).*"
+
