@@ -31,6 +31,7 @@ int isTerm = -1;
 char *cmd = NULL;
 char *keys = "cv";
 int delay = 20000;
+BOOL swap = FALSE;
 
 static void usage(const char *program)
 {
@@ -47,6 +48,7 @@ static void usage(const char *program)
 			"   -c cmd      Command to run to determine mode. An exit code of 0 is used to\n"
 			"               indicate terminal mode.\n"
 			"   -k keys     Specify a list of keys that should be converted. Default: cv\n"
+			"   -s          Swap alt and super keys to more closely match the layout on a mac\n"
 
 			, program, program);
 }
@@ -131,12 +133,12 @@ int main(int argc, char **argv)
 {
 	char				o;
 	input_event			event;
-	BOOL				left_alt_held	= FALSE;
-	BOOL				right_alt_held	= FALSE;
+	BOOL				left_super_held		= FALSE;
+	BOOL				right_super_held	= FALSE;
 	BOOL				*current;
 	BOOL				terminal_state;
 
-	while (-1 != (o = getopt(argc, argv, "htTk:c:"))) {
+	while (-1 != (o = getopt(argc, argv, "htTsk:c:"))) {
         switch (o) {
             case 'h':
                 usage(argv[0]);
@@ -149,6 +151,10 @@ int main(int argc, char **argv)
             case 'T':
 				isTerm = 0;
 				break;
+
+			case 's':
+				swap = TRUE;
+                break;
 
 			case 'c':
 				cmd = optarg;
@@ -178,13 +184,25 @@ int main(int argc, char **argv)
             continue;
         }
 
+		if (swap) {
+			switch (event.code) {
+				case KEY_LEFTMETA:	event.code = KEY_LEFTALT;	break;
+				case KEY_LEFTALT:	event.code = KEY_LEFTMETA;	break;
+				case KEY_RIGHTMETA:	event.code = KEY_RIGHTALT;	break;
+				case KEY_RIGHTALT:	event.code = KEY_RIGHTMETA;	break;
+
+				default:
+					break;
+			}
+		}
+
 		switch (event.code) {
-			case KEY_LEFTALT:
-				current = &left_alt_held;
+			case KEY_LEFTMETA:
+				current = &left_super_held;
 				break;
 
-			case KEY_RIGHTALT:
-				current = &right_alt_held;
+			case KEY_RIGHTMETA:
+				current = &right_super_held;
 				break;
 
 			default:
@@ -204,22 +222,22 @@ int main(int argc, char **argv)
 			}
 		}
 
-		if (left_alt_held || right_alt_held) {
+		if (left_super_held || right_super_held) {
 			o = key2char(event.code);
 			if (o != '\0' && strchr(keys, o)) {
 				/*
 					This key needs to be modified
 
-					Send an event to release the alt key(s) and then to press
+					Send an event to release the super key(s) and then to press
 					the desired modifiers before passing through the real key.
 				*/
 				terminal_state = check_for_terminal();
 
-				if (left_alt_held) {
-					fake_event(KEY_LEFTALT, KEY_STROKE_UP);
+				if (left_super_held) {
+					fake_event(KEY_LEFTMETA, KEY_STROKE_UP);
 				}
-				if (right_alt_held) {
-					fake_event(KEY_RIGHTALT, KEY_STROKE_UP);
+				if (right_super_held) {
+					fake_event(KEY_RIGHTMETA, KEY_STROKE_UP);
 				}
 
 				fake_event(KEY_LEFTCTRL, KEY_STROKE_DOWN);
@@ -235,11 +253,11 @@ int main(int argc, char **argv)
 				usleep(delay);
 
 				/* Undo everything we just did */
-				if (left_alt_held) {
-					fake_event(KEY_LEFTALT, KEY_STROKE_DOWN);
+				if (left_super_held) {
+					fake_event(KEY_LEFTMETA, KEY_STROKE_DOWN);
 				}
-				if (right_alt_held) {
-					fake_event(KEY_RIGHTALT, KEY_STROKE_DOWN);
+				if (right_super_held) {
+					fake_event(KEY_RIGHTMETA, KEY_STROKE_DOWN);
 				}
 
 				fake_event(KEY_LEFTCTRL, KEY_STROKE_UP);

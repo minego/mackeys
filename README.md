@@ -1,6 +1,6 @@
 # mackeys
 
-Convert alt+[c|v] to either ctrl+[c|v] or ctrl+shift+[c|v]
+Convert super+[c|v] to either ctrl+[c|v] or ctrl+shift+[c|v]
 
 ## Why?!
 
@@ -16,7 +16,7 @@ Execution
 ```
 mackeys - Use macOS style copy and paste shortcuts on Linux
 
-usage mackeys [-h | [-t | -T | [-c cmd]] [-k keys]]
+usage mackeys [-h | [-t | -T | [-c cmd]] [-k keys] [-s]]
 
 options:
 	-h			Show this message and exit
@@ -25,6 +25,7 @@ options:
 	-c cmd		Command to run to determine mode. An exit code of 0 is used to
 				indicate terminal mode.
 	-k keys		Specify a list of keys that should be converted. Default: cv
+	-s			Swap alt and super keys to more closely match the layout on a mac
 ```
 
 ## Dependencies
