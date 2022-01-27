@@ -1,5 +1,7 @@
 # mackeys
 
+Convert alt+[c|v] to either ctrl+[c|v] or ctrl+shift+[c|v]
+
 ## Why?!
 
 As a heavy terminal user I've always been frustrated that the normal keystrokes
@@ -27,6 +29,6 @@ options:
 
 ## Dependencies
 
-[Interception Tools](https://gitlab.com/interception/linux/tools))
+[Interception Tools](https://gitlab.com/interception/linux/tools)
 
 
