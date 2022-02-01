@@ -29,7 +29,7 @@ const struct input_event	syn	= { .type = EV_SYN, .code = SYN_REPORT, .value = 0 
 /* Global options */
 int isTerm = -1;
 char *cmd = NULL;
-char *keys = "cv";
+char *keys = "cvx";
 int delay = 20000;
 BOOL swap = FALSE;
 
@@ -47,7 +47,7 @@ static void usage(const char *program)
 			"   -d          Delay used for key sequences (default: 20000 microseconds)\n"
 			"   -c cmd      Command to run to determine mode. An exit code of 0 is used to\n"
 			"               indicate terminal mode.\n"
-			"   -k keys     Specify a list of keys that should be converted. Default: cv\n"
+			"   -k keys     Specify a list of keys that should be converted. Default: cvx\n"
 			"   -s          Swap alt and super keys to more closely match the layout on a mac\n"
 
 			, program, program);
@@ -135,6 +135,8 @@ int main(int argc, char **argv)
 	input_event			event;
 	BOOL				left_super_held		= FALSE;
 	BOOL				right_super_held	= FALSE;
+	BOOL				sent_super_down		= FALSE;
+	BOOL				did_modify			= FALSE;
 	BOOL				*current;
 	BOOL				terminal_state;
 
@@ -214,11 +216,42 @@ int main(int argc, char **argv)
 			switch (event.value) {
 				case KEY_STROKE_UP:
 					*current = FALSE;
+
+					if (!did_modify && !sent_super_down) {
+						/*
+							It looks like the user just tapped the key which
+							is useful and should be let through.
+						*/
+						sent_super_down = TRUE;
+
+						if (left_super_held) {
+							fake_event(KEY_LEFTMETA, KEY_STROKE_DOWN);
+						}
+						if (right_super_held) {
+							fake_event(KEY_RIGHTMETA, KEY_STROKE_DOWN);
+						}
+
+						write_event(&syn);
+						usleep(delay);
+					}
+
+					if (!sent_super_down) {
+						/* We never sent the down event so don't send the up */
+						continue;
+					}
+
+					/* Reset our state */
+					did_modify = FALSE;
+					sent_super_down = FALSE;
 					break;
 
 				case KEY_STROKE_DOWN:
 					*current = TRUE;
-					break;
+
+					/* Eat the event for now */
+					sent_super_down = FALSE;
+					did_modify = FALSE;
+					continue;
 			}
 		}
 
@@ -233,11 +266,13 @@ int main(int argc, char **argv)
 				*/
 				terminal_state = check_for_terminal();
 
-				if (left_super_held) {
-					fake_event(KEY_LEFTMETA, KEY_STROKE_UP);
-				}
-				if (right_super_held) {
-					fake_event(KEY_RIGHTMETA, KEY_STROKE_UP);
+				if (sent_super_down) {
+					if (left_super_held) {
+						fake_event(KEY_LEFTMETA, KEY_STROKE_UP);
+					}
+					if (right_super_held) {
+						fake_event(KEY_RIGHTMETA, KEY_STROKE_UP);
+					}
 				}
 
 				fake_event(KEY_LEFTCTRL, KEY_STROKE_DOWN);
@@ -245,19 +280,22 @@ int main(int argc, char **argv)
 					fake_event(KEY_LEFTSHIFT, KEY_STROKE_DOWN);
 				}
 				write_event(&syn);
-
 				usleep(delay);
 
 				/* Let the original key through */
 				write_event(&event);
 				usleep(delay);
 
+				did_modify = TRUE;
+
 				/* Undo everything we just did */
-				if (left_super_held) {
-					fake_event(KEY_LEFTMETA, KEY_STROKE_DOWN);
-				}
-				if (right_super_held) {
-					fake_event(KEY_RIGHTMETA, KEY_STROKE_DOWN);
+				if (sent_super_down) {
+					if (left_super_held) {
+						fake_event(KEY_LEFTMETA, KEY_STROKE_DOWN);
+					}
+					if (right_super_held) {
+						fake_event(KEY_RIGHTMETA, KEY_STROKE_DOWN);
+					}
 				}
 
 				fake_event(KEY_LEFTCTRL, KEY_STROKE_UP);
@@ -268,6 +306,21 @@ int main(int argc, char **argv)
 				usleep(delay);
 
 				continue;
+			} else {
+				/* We held the super down event back, so send it now */
+				if (!sent_super_down) {
+					sent_super_down = TRUE;
+
+					if (left_super_held) {
+						fake_event(KEY_LEFTMETA, KEY_STROKE_DOWN);
+					}
+					if (right_super_held) {
+						fake_event(KEY_RIGHTMETA, KEY_STROKE_DOWN);
+					}
+
+					write_event(&syn);
+					usleep(delay);
+				}
 			}
 		}
 
