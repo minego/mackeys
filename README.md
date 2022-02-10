@@ -1,16 +1,28 @@
 # mackeys
 
-Convert super+[c|v] to either ctrl+[c|v] or ctrl+shift+[c|v]
+- Map super+x to shift+delete
+- Map super+c to ctrl+insert
+- Map super+v to shift+insert
 
 ## Why?!
 
-As a heavy terminal user I've always been frustrated that the normal keystrokes
-for copy and paste can't be used in the terminal. After spending some time using
-macOS I have learned to really like being able to use command+c and command+v
-to copy and paste everywhere including the terminal.
+When I press ctrl+c the outcome is not consistent. If I'm in a terminal then it
+sends a break. If I'm not in a terminal then it does a copy on Linux, but not on
+macOS.
 
-To make this work properly requires knowing if the currently focused window is a
-terminal or not, and there is no easy way to know that.
+I want a consistent set of key bindings for copy and paste that will behave the
+same regardless of the application that I'm in and regardless of the OS that I
+am on.
+
+On macOS this is pretty easy. Using command+c and command+v behaves pretty much
+everywhere, including in a terminal. Unfortunately those bindings don't do
+anything on a Linux system. This is an attempt to fix that.
+
+Mapping these bindings to ctrl+c and ctrl+v is sufficient for most applications
+but does not work in a terminal but using ctrl+insert and shift+insert does work
+both in terminals (at least the ones I've tried) and in most Linux gui
+applications.
+
 
 Execution
 ```
@@ -20,12 +32,8 @@ usage mackeys [-h | [-t | -T | [-c cmd]] [-k keys] [-s]]
 
 options:
 	-h			Show this message and exit
-	-t			Assume terminal mode, send ctrl+shift+<key>
-	-T			Assume NOT terminal mode, send ctrl+<key>
-	-c cmd		Command to run to determine mode. An exit code of 0 is used to
-				indicate terminal mode.
-	-k keys		Specify a list of keys that should be converted. Default: cv
-	-s			Swap alt and super keys to more closely match the layout on a mac
+	-d          Delay used for key sequences (default: 20000 microseconds)\n"
+	
 ```
 
 ## Dependencies
