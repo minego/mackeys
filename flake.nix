@@ -26,8 +26,10 @@
 			};
 		};
 
-		overlay = final: prev: {
-			mackeys = self.packages.x86_64-linux.default;
+		overlay = self: super: {
+			minego = (super.minego or {}) // {
+				mackeys = self.packages.x86_64-linux.default;
+			};
 		};
 	};
 }
