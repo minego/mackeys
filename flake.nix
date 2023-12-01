@@ -25,5 +25,9 @@
 				platforms	= platforms.linux;
 			};
 		};
+
+		overlay = final: prev: {
+			mackeys = self.packages.x86_64-linux.default;
+		};
 	};
 }
