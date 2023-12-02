@@ -1,25 +1,25 @@
 {
 	description			= "A flake for building my mackeys plugin for interception-tools";
+	inputs.nixpkgs.url	= "github:NixOS/nixpkgs/nixos-unstable";
 
-	inputs = {
-		nixpkgs.url			= "github:NixOS/nixpkgs/nixos-unstable";
-		flake-utils. url	= "github:numtide/flake-utils";
-	};
-
-	outputs = { self, nixpkgs, flake-utils }: flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ]  (system:
-		let pkgs = nixpkgs.legacyPackages.${system}; in
-	{
-		packages = rec {
-			mackeys = pkgs.callPackage ./derivation.nix { };
-			default = mackeys;
-		};
-
+	outputs = { self, nixpkgs }: {
 		overlay = self: super: {
 			minego = (super.minego or {}) // {
 				mackeys = super.pkgs.callPackage ./derivation.nix { };
 			};
 		};
-	});
+
+		packages = {
+			"x86_64-linux" = rec {
+				mackeys = nixpkgs.legacyPackages."x86_64-linux".callPackage ./derivation.nix { };
+				default = mackeys;
+			};
+			"aarch64-linux" = rec {
+				mackeys = nixpkgs.legacyPackages."aarch64-linux".callPackage ./derivation.nix { };
+				default = mackeys;
+			};
+		};
+	};
 }
 
 
