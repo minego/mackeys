@@ -169,7 +169,7 @@ static void apply_mods(unsigned char *current_mods, unsigned char desired_mods)
 
 int main(int argc, char **argv)
 {
-	char				o;
+	int					ret;
 	input_event			event;
 	unsigned char		cur;
 	int					faked		= 0;
@@ -177,8 +177,8 @@ int main(int argc, char **argv)
 	unsigned char		mods_in		= 0;
 	unsigned char		mods_out	= 0;
 
-	while (-1 != (o = getopt(argc, argv, "hd:"))) {
-        switch (o) {
+	while (-1 != (ret = getopt(argc, argv, "hd:"))) {
+        switch ((char) ret) {
             case 'h':
                 usage(argv[0]);
 				return EXIT_SUCCESS;
